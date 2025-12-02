@@ -4,23 +4,61 @@
 [![Technologies Principales](https://img.shields.io/badge/Tech-pfSense%2C%20Proxmox%2C%20Ansible-blue)](./documentation/architecture.md)
 [![Focus Technique](https://img.shields.io/badge/Focus-R%C3%A9seau%20Avanc%C3%A9%20%26%20S%C3%A9curit%C3%A9-red)](./documentation/rapport_technique.md)
 
-Ce dépôt documente le déploiement d'un Home Lab réseau complexe, virtualisé sur des hôtes **Proxmox VE**, simulant une infrastructure d'entreprise hautement segmentée. Le projet met en évidence la maîtrise du **routage sécurisé (pfSense)**, la gestion des accès distants (**VPN**), l'**automatisation (Ansible)**, et l'**audit technique** via des outils professionnels de **Documentation d'Infrastructure (NetBox)** et de **Monitoring (LibreNMS/Grafana)**.
+
+> **Projet Académique & Personnel** - Simulation d'une infrastructure d'entreprise hautement segmentée avec contraintes de conformité.
+
+## 📋 Présentation
+
+Ce dépôt documente le déploiement d'un laboratoire virtuel simulant un réseau d'entreprise multisite. Contrairement aux "Labs" classiques, celui-ci est orienté **Gouvernance et Sécurité (GRC)** : chaque choix technique répond à une exigence de traçabilité, de moindre privilège ou de disponibilité.
+
+**Points clés :**
+* **Zero Trust Access :** Aucun port ouvert, accès via Cloudflare Tunnels authentifiés.
+* **Infrastructure as Code :** Audit de conformité automatisé via Ansible.
+* **Source of Truth :** Documentation réseau dynamique (NetBox) faisant foi.
 
 ---
 
-## 🎯 Objectifs du Projet
+## 📸 Aperçu Visuel (Screenshots)
 
-Ce laboratoire est conçu pour valider une **maîtrise complète des architectures réseaux modernes, de la sécurité opérationnelle et des pratiques d'audit technique**.
+### 1. Topologie Réseau Logique
+*Générée via NetBox, illustrant la segmentation VLAN (Infra, SecOps, Transit).*
+![Schéma Réseau](docs/images/network_topology.png)
 
-* **Routage & Segmentation :** Configurer pfSense A comme firewall/routeur inter-VLAN principal pour appliquer des politiques de sécurité strictes, assurant le principe du moindre privilège.
-* **Virtualisation & Distribution :** Utiliser des conteneurs LXC et des VMs distribués sur deux hôtes Proxmox (PC A et PC B) pour optimiser les ressources.
-* **Contrôle et Visibilité :** Déployer une stack de monitoring professionnelle (LibreNMS, Grafana, ntopng) pour la surveillance proactive du réseau et l'analyse des flux.
-* **Audit et Documentation d'Infrastructure :** Mettre en place NetBox pour l'IPAM (Gestion des Adresses IP) et l'inventaire, et Oxidized pour la sauvegarde automatisée des configurations, des étapes clés de l'audit et de la traçabilité.
-* **Automatisation :** Utiliser Ansible pour le déploiement rapide et reproductible des services (IaC - Infrastructure as Code).
+### 2. Supervision & Métrologie
+*Monitoring actif des interfaces critiques via LibreNMS (SNMPv3).*
+![LibreNMS Dashboard](docs/images/librenms_graph.png)
 
-<p align="center">
-<img width="650" src="https://github.com/tescalon/Advanced-Network-Lab/blob/main/Architecture%20r%C3%A9elle%20r%C3%A9seau.png" alt="Architecture réelle" />
-</p>
+### 3. Sécurité & Routage
+*Règles de filtrage strictes sur pfSense (Inter-VLAN).*
+![Règles Firewall](docs/images/pfsense_rules.png)
 
 ---
-**Le projet est actuellement en cours de réalisation. La documentation détaillée de l'architecture, de la configuration et des analyses de sécurité sera mise à jour et publiée dans les prochains jours / semaines / mois.**
+
+## 🏗️ Architecture Technique
+
+| Couche | Technologie | Rôle |
+| :--- | :--- | :--- |
+| **Virtualisation** | Proxmox VE | Hyperviseur Type 2 (Linux Bridge & VLAN Aware) |
+| **Réseau** | pfSense | Routage, Firewalling, DHCP |
+| **IAM / Accès** | Cloudflare Zero Trust | Portail d'accès sécurisé (IdP) |
+| **Automation** | Ansible | Déploiement de configs & Audit de conformité |
+| **IPAM** | NetBox | Gestionnaire d'adresses IP et Inventaire |
+
+*Pour les détails techniques complets (Plan d'adressage IP, VLANs), voir la [Documentation Architecture](docs/ARCHITECTURE.md).*
+
+---
+
+## 🚀 Déploiement & Automatisation
+
+L'infrastructure utilise **Ansible** pour garantir la conformité des configurations.
+
+**Exemple de Playbook d'Audit (GRC) :**
+Ce script ne configure pas, il vérifie que les politiques de sécurité sont appliquées (ex: Firewall local actif).
+
+```yaml
+- name: Audit de Conformité
+  tasks:
+    - name: Check UFW Status
+      command: ufw status
+      register: ufw_status
+      failed_when: "'inactive' in ufw_status.stdout"
