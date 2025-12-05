@@ -1,17 +1,30 @@
 # 🛡️ Home Lab Réseau Avancé & Sécurité Opérationnelle
 
-[![Statut du Projet](https://img.shields.io/badge/Statut-En%20Cours-orange)](./documentation/objectifs.md)
-[![Focus Technique](https://img.shields.io/badge/Focus-R%C3%A9seau%20Avanc%C3%A9%20%26%20S%C3%A9curit%C3%A9-blue)](./documentation/rapport_technique.md)
-[![Infra](https://img.shields.io/badge/Infra-pfSense%2C%20Proxmox%2C%20WireGuard%2C%20Docker-critical)](./documentation/architecture.md)
-[![Ops Stack](https://img.shields.io/badge/Ops-Ansible%2C%20NetBox%2C%20LibreNMS%2C%20Grafana%2C%20ntopng-blueviolet)](./documentation/architecture.md)
+[![Statut du Projet](https://img.shields.io/badge/Statut-Finalis%C3%A9-success)](./docs/ARCHITECTURE.md)
+[![Focus Technique](https://img.shields.io/badge/Focus-GRC%20%7C%20Zero%20Trust%20%7C%20IaC-blue)](./docs/ARCHITECTURE.md)
+[![Infra](https://img.shields.io/badge/Infra-pfSense%2C%20Proxmox%2C%20WireGuard%2C%20Docker-critical)](./docs/ARCHITECTURE.md)
+[![Ops Stack](https://img.shields.io/badge/Ops-Ansible%2C%20NetBox%2C%20LibreNMS%2C%20Grafana%2C%20ntopng-blueviolet)](./DOCKER_STACK/docker-compose.yml)
 
+> **Projet Académique & Personnel** - Simulation d'une infrastructure d'entreprise segmentée avec contraintes de conformité. Ce dépôt documente le déploiement d'une **infrastructure multisite** (Siège/Agence) simulant un environnement critique, orientée **Sécurité Réseau & GRC**.
 
-> **Projet Académique & Personnel** - Simulation d'une infrastructure d'entreprise segmentée avec contraintes de conformité.
+---
 
+## 📑 Table des Matières (Navigation Rapide)
 
-## 📋 Présentation
+1.  [Piliers Architecturaux et Sécurité](#1-piliers-architecturaux-et-sécurité)
+2.  [Isolation L2 : "Physical Virtual Segregation"](#2-isolation-l2--physical-virtual-segregation)
+3.  [Architecture & Inventaire IPAM](#3-architecture--inventaire-ipam)
+4.  [Ingénierie & Durcissement](#4-ingénierie--durcissement)
+5.  [Stack GRC et Automatisation](#5-stack-grc-et-automatisation)
+6.  [Interconnexion Sécurisée (WireGuard)](#6-interconnexion-sécurisée-wireguard)
+7.  [Politique de Sécurité (Zero Trust)](#7-politique-de-sécurité-zero-trust)
+8.  [Aperçu Visuel & Preuves de Concept](#8-aperçu-visuel--preuves-de-concept)
+9.  [Roadmap & Perspectives d'Évolution](#9-roadmap--perspectives-dévolutions)
+10. [Compétences Démontrées](#10-compétences-démontrées)
 
-Ce dépôt documente le déploiement d'une **infrastructure multisite** (Siège/Agence) simulant un environnement critique, orientée **Sécurité Réseau & GRC**.
+---
+
+## 1. Piliers Architecturaux et Sécurité
 
 Le projet dépasse la simple connectivité pour simuler un environnement critique où chaque flux est justifié. L'approche est celle du **"Security by Design"** : l'architecture privilégie une segmentation stricte et une auditabilité totale.
 
@@ -22,7 +35,9 @@ Le projet dépasse la simple connectivité pour simuler un environnement critiqu
 * **Visibilité & Conformité :** Stratégie de supervision hybride (Edge avec *ntopng* / Central avec *LibreNMS*) pilotée par une "Source of Truth" unique (**NetBox**).
 * **Infrastructure as Code :** Audits de conformité automatisés via **Ansible**, assurant qu'aucun changement manuel ne passe inaperçu (Anti-Drift).
 
-## 1.2 Solution d'Ingénierie : "Physical Virtual Segregation"
+---
+
+## 2. Isolation L2 : "Physical Virtual Segregation"
 
 Cette architecture répond à une problématique spécifique liée à la sécurité des environnements virtualisés imbriqués (*Nested Virtualization*).
 
@@ -32,91 +47,119 @@ Cette architecture répond à une problématique spécifique liée à la sécuri
 ### 🛡️ La Solution : "Air Gap Virtuel"
 
 Au lieu de faire passer tous les réseaux sur un seul câble virtuel (Mode Trunk), nous appliquons une **isolation stricte par interface**.
-
 * **Approche Classique (Rejetée) :** 1 vNIC avec Trunk VLAN $\rightarrow$ Risque de fuite.
 * **Approche Retenue (Ségrégation) :** 1 vNIC distincte connectée à un Pont Linux (Bridge) distinct pour chaque zone.
 
-```mermaid
-graph TD
-    subgraph "Approche Ségrégée (Physical Virtual Segregation)"
-        FW[Firewall VM]
-        
-        FW -- "vNIC 1 (vtnet0)" --> BR1[vmbr0 : WAN]
-        FW -- "vNIC 2 (vtnet1)" --> BR2[vmbr1 : LAN Admin]
-        FW -- "vNIC 3 (vtnet2)" --> BR3[vmbr2 : DMZ]
-        
-        BR1 -.-> WAN_Zone[Zone Internet]
-        BR2 -.-> LAN_Zone[Zone Trust]
-        BR3 -.-> DMZ_Zone[Zone Untrust]
-        
-        style FW fill:#f9f,stroke:#333,stroke-width:2px
-        style BR1 fill:#fff,stroke:#333
-        style BR2 fill:#afa,stroke:#333
-        style BR3 fill:#faa,stroke:#333
-    end
-```
 ---
 
-## 📸 Aperçu Visuel & Preuves de Concept
+## 3. Architecture & Inventaire IPAM
 
-Cette section illustre la mise en œuvre technique des politiques de sécurité et de gouvernance définies dans le DAT.
+Le cœur du réseau est hébergé sur le site principal. Il concentre les fonctions de sécurité périmétrique et de gouvernance.
 
-### 1. Ségrégation Physique Virtuelle (Hyperviseur)
-*Configuration Proxmox montrant l'isolation stricte des zones (Wan, Lan, DMZ) via des ponts Linux distincts (Linux Bridges), garantissant qu'aucune fuite L2 n'est possible entre les zones.*
-![Proxmox Network Architecture](docs/images/proxmox_network_segregation.png)
+### 3.1. Schéma d'Architecture 
 
-### 2. Politique de Filtrage "Zero Trust" (Firewall)
-*Règles pfSense sur l'interface DMZ. Illustration du principe "Default Deny" : accès Internet autorisé pour les mises à jour, mais interdiction stricte d'initier des connexions vers le LAN (Admin).*
-![Règles Firewall DMZ](docs/images/pfsense_dmz_rules.png)
+[Image of Network Topology Diagram showing HQ LAN, DMZ, Branch LAN, and VPN tunnel connecting them, with IP subnets and pfSense routers]
 
-### 3. Source of Truth (NetBox)
-*Inventaire dynamique servant de référence unique. Chaque interface, IP et câble virtuel est documenté avant d'être déployé, assurant la cohérence CMDB.*
-![NetBox Device Interfaces](docs/images/netbox_inventory.png)
+[**Voir le Fichier Complet de l'Architecture et des Configurations dans `docs/ARCHITECTURE.md`**](./docs/ARCHITECTURE.md)
 
-### 4. Supervision Unifiée (Observabilité)
-*Tableau de bord Grafana centralisant les alertes de disponibilité (LibreNMS) et l'analyse des flux réseaux (ntopng) pour une vision "Single Pane of Glass".*
-![Grafana Dashboard](docs/images/grafana_ops_dashboard.png)
-
-### 5. Automatisation & Audit (IaC)
-*Exécution d'un playbook Ansible pour la vérification de conformité et détection de changement de configuration (Drift Management) via Oxidized.*
-![Ansible & Oxidized](docs/images/ansible_audit_output.png)
-
----
-
-## 🏗️ Architecture Technique
-
-| Couche | Technologie | IP d'Accès / Port | Rôle |
-| :--- | :--- | :--- | :--- |
-| **Virtualisation** | Proxmox VE | `10.10.10.x` (Mgmt) | Hyperviseur **Type 1** (Bare Metal / LXC & KVM) |
-| **Réseau** | pfSense (HQ) | `10.10.10.254` | Routage, Firewalling, DHCP & IDS |
-| **Interconnexion** | WireGuard | `10.10.20.0/24` | Tunneling Site-à-Site Furtif (Siège $\leftrightarrow$ Agence) |
-| **IAM / Accès** | Cloudflare Tunnel | *Connector (Sortant)* | Portail Zero Trust pour l'administration distante (IdP) |
-| **Automation** | Ansible | `10.50.10.10` (CLI) | Déploiement de configs & Audit de conformité |
-| **Audit / Backup** | Oxidized | `10.50.10.10:8888` | Versioning automatique des configurations (Git) |
-| **IPAM / GRC** | NetBox | `10.50.10.10:8000` | Source de Vérité (SoT) & Gestion d'inventaire |
-| **Observabilité** | LibreNMS | `10.50.10.10:80` | Supervision SNMPv3 centralisée |
-| **Analyse Edge** | ntopng | `10.20.10.254:3000` | Analyse de flux déportée sur l'Agence (Traffic Shaping) |
-
-*Pour les détails techniques complets (Plan d'adressage IP, VLANs), voir la [Documentation Architecture](docs/ARCHITECTURE.md).*
-
----
-
-### 2.2. Plan d'Adressage (IPAM)
+### 3.2. Plan d'Adressage (IPAM)
 L'adressage utilise la RFC1918 et une logique géographique stricte.
 
 | Zone | CIDR (L3) | Gateway (pfSense) | Élément Clé & IP |
 | :--- | :--- | :--- | :--- |
-| **LAN HQ** | `10.10.10.0/24` | `10.10.10.254` | **Hyperviseur pve (Proxmox):** `10.10.10.15` |
-| **DMZ HQ** | `10.50.10.0/24` | `10.50.10.254` | **Serveur Admin/Docker:** `10.50.10.10` |
-| **LAN BR** | `10.20.10.0/24` | `10.20.10.254` | **Client Agence (Debian):** `10.20.10.10` |
+| **LAN Siège** | `10.10.10.0/24` | `10.10.10.254` | **Hyperviseur pve (Proxmox):** `10.10.10.15` |
+| **DMZ Siège** | `10.50.10.0/24` | `10.50.10.254` | **Serveur Admin/Docker:** `10.50.10.10` |
+| **LAN Agence** | `10.20.10.0/24` | `10.20.10.254` | **Client Agence (Debian):** `10.20.10.10` |
 | **VPN** | `10.10.20.0/24` | - | **WireGuard Peer HQ:** `.1` / **Peer BR:** `.2` |
 
 ---
 
-## 7. 🛡️ Politique de Sécurité (Firewall Rules)
+## 4. Ingénierie & Durcissement
 
-**Stratégie appliquée :** Zero Trust (Default Deny).
-*Par défaut, tout trafic est bloqué sauf s'il est explicitement autorisé.*
+Cette section détaille les choix techniques effectués pour renforcer la sécurité et la stabilité du système.
+
+### 4.1. Configuration pfSense (Cœur de Réseau)
+*Rôle : Security Gateway & Point de terminaison VPN.*
+
+#### 🔌 Interfaces & Ségrégation
+Chaque interface correspond à une zone de sécurité isolée physiquement (vNIC distincte).
+
+| Interface | Zone | IP / CIDR | Rôle & Politique de Sécurité |
+| :--- | :--- | :--- | :--- |
+| **WAN** (`em0`) | *Untrusted* | `DHCP / Public` | Connecté au monde extérieur. Règle **"Deny All"** en entrée par défaut. |
+| **LAN** (`em1`) | *Trust* | `10.10.10.254/24` | Zone de Gestion. Accès administrateur complet. |
+| **SECOPS** (`em2`) | *DMZ* | `10.50.10.254/24` | **Zone Démilitarisée.** Isolation stricte (Pas d'accès initié vers le LAN). |
+| **VPN** (`em3`) | *Overlay* | `10.10.20.1/24` | Interface virtuelle **WireGuard**. Transport chiffré inter-sites. |
+
+#### ⚙️ Optimisation Kernel (Intégrité des Données)
+> **Configuration Critique : Hardware Checksum Offload = DISABLED**
+>
+> * **Justification Technique :** Les drivers paravirtualisés (**VirtIO**) calculent parfois mal les sommes de contrôle (Checksums) TCP/UDP.
+> * **Impact évité :** Empêche la corruption silencieuse des paquets et l'apparition de faux positifs sur les systèmes de détection d'intrusion (IDS).
+
+#### 🛡️ Services Réseau & Résilience
+* **DNS Resolver (Unbound) :** Mode récursif avec *Host Overrides* pour le domaine interne `netbox.homelab`. *(Gain GRC : Évite la dépendance aux DNS publics et masque la topologie interne (Privacy)).*
+* **Auto Config Backup (ACB) :** Sauvegarde chiffrée (**AES-256**) automatique dans le cloud pfSense. *(Gain GRC : Garantit un **RTO (Recovery Time Objective)** minimal en cas de crash matériel).*
+
+### 4.2. Serveur d'Administration (`srv-admin-siege: 10.50.10.10`)
+*Type : Conteneur LXC (ID 105)*
+
+#### 📦 Architecture : "Docker on LXC"
+L'architecture utilise une imbrication de conteneurs (Nesting) pour optimiser les ressources sans sacrifier la sécurité.
+* **Justification Hardening (Durcissement) :**
+    * **LXC Non-Privilégié (Unprivileged) :** Le `root` du conteneur est mappé sur un utilisateur standard de l'hôte.
+    * **Option `nesting=1` :** Permet l'isolation des namespaces Docker.
+
+[**Voir la Configuration du Conteneur LXC (`105.conf`) dans `docs/ARCHITECTURE.md`**](./docs/ARCHITECTURE.md)
+
+---
+
+## 5. Stack GRC et Automatisation
+
+La chaîne d'outillage est centralisée dans la DMZ pour respecter la **Ségrégation des Tâches (SoD)**.
+
+### 5.1. Stack Applicative GRC
+
+| Service | Rôle GRC | Justification du Choix |
+| :--- | :--- | :--- |
+| **NetBox** | *Source of Truth* | **Asset Management.** Remplace les fichiers Excel obsolètes. Documente chaque câble, IP et VLAN *avant* déploiement. |
+| **LibreNMS** | *Supervision* | Utilisation exclusive de **SNMPv3** (Authentifié & Chiffré) indispensable pour traverser des zones non sûres. |
+| **Grafana** | *Visualisation* | Centralisation des KPIs de disponibilité pour les tableaux de bord directionnels. |
+| **Oxidized** | *Sauvegarde* | **Traçabilité & Audit.** Versioning automatique des configs. Répond à la question *"Qui a changé quoi et quand ?"* (Diff configs). |
+
+[**Voir le fichier `docker-compose.yml` complet dans `DOCKER_STACK/`**](./DOCKER_STACK/docker-compose.yml)
+
+### 5.2. Automatisation (Ansible)
+* **Objectif :** Éliminer la configuration manuelle et le risque de *Configuration Drift*.
+* **Sécurité :** Utilisation de clés SSH **Ed25519** (Courbes elliptiques, plus robuste que RSA) pour l'authentification sans mot de passe vers les pare-feux.
+
+[**Voir les Playbooks d'Audit et de Durcissement dans `ANSIBLE/`**](./ANSIBLE/)
+
+### 5.3. Infrastructure Agence (Surveillance "Edge")
+Nous adoptons une stratégie de traitement à la périphérie (**Edge Computing**) pour éviter de saturer le lien VPN avec du trafic de monitoring brut.
+* **Composant :** `ntopng` installé directement sur `pfsense-agence`.
+* **Rôle :** Analyseur de flux (NetFlow/IPFIX). *(Justification GRC : Permet une **détection d'anomalies locales** en temps réel, sans impact sur la bande passante inter-sites.)*
+
+---
+
+## 6. Interconnexion Sécurisée (WireGuard)
+
+Choix technologique : **WireGuard** (vs IPsec/OpenVPN).
+
+### 6.1. Justification Cryptographique & Performance
+* **Surface d'attaque réduite :** ~4 000 lignes de code (facilitant l'audit de sécurité).
+* **Cryptographie Moderne :** Utilise **ChaCha20-Poly1305** et **Curve25519**.
+* **Stealth (Furtivité) :** WireGuard ne répond pas aux paquets non authentifiés. Pour un scanner externe, le port UDP `51820` apparaît **fermé** ou invisible.
+
+### 6.2. Architecture de Routage (Statique)
+* **Choix :** Routage Statique.
+* **Justification :** Évite les risques d'**injection de routes malveillantes**. Le trafic suit strictement le chemin défini en dur.
+
+---
+
+## 7. Politique de Sécurité (Zero Trust)
+
+**Stratégie appliquée :** Zero Trust (Default Deny). Le pare-feu est configuré pour bloquer par défaut tout trafic non explicitement autorisé.
 
 | Interface | Source | Destination | Port / Proto | Action | Commentaire / Justification GRC |
 | :--- | :--- | :--- | :--- | :---: | :--- |
@@ -127,50 +170,29 @@ L'adressage utilise la RFC1918 et une logique géographique stricte.
 | **VPN** | Agence Net | DMZ Net | `TCP/80, 3000, 8000` | **✅ Pass** | Accès aux outils GRC (NetBox, Grafana) depuis l'agence. |
 | **VPN** | Siège Net | Agence Net | `UDP/161` | **✅ Pass** | Flux de supervision (Pull SNMP) vers l'agence. |
 
----
-
-## 3. ⚙️ Ingénierie & Durcissement
-
-### 3.1. Cœur de Réseau & Optimisations
-* **Routage Inter-Zones :** Géré par `pfsense-hq`. Interface SECOPS dédiée (`10.50.10.254`) pour la DMZ.
-* **Optimisation Kernel :** Désactivation du **`Hardware Checksum Offload`** sur pfSense. (Correction de la corruption de paquets due aux drivers paravirtuels).
-* **Isolation Hyperviseur :** Le pont réseau `vmbr1` (vers la DMZ) est configuré **sans IP** pour ne pas exposer l'hôte (`10.10.10.15`) à la DMZ.
-
-### 3.2. Correction d'Ingénierie du VPN
-* **Problème Diagnostiqué :** Le package WireGuard sur pfSense ne créait pas systématiquement les routes statiques nécessaires pour les `AllowedIPs` après redémarrage.
-* **Solution (Expertise) :** Ajout de **Routes Statiques Manuelles** (`System > Routing`) sur chaque routeur, utilisant l'adresse du Peer Tunnel opposé (`10.10.20.x`) comme Gateway.
-
- **<- SCREENSHOT DES ROUTES STATIQUES DANS PFSENSE**
-
-### 3.3. Politique de Sécurité (Firewalling GRC)
-Application du **Principe du Moindre Privilège** et du **Zero Trust**.
-
-* **Règle Critique d'Isolation :** Règle de **BLOCK** explicite sur l'interface SECOPS (DMZ) de tout trafic initié vers le réseau LAN HQ (`10.10.10.0/24`). **(Prévention des mouvements latéraux de la DMZ vers l'Administration).**
-* **Flux Métier VPN :** Autorisation sélective de l'Agence vers les services GRC/SecOps de la DMZ (TCP/80, 8000, 3000, 8888).
-
- **<- SCREENSHOT DE LA RÈGLE DE BLOCK CRITIQUE**
-
- ---
-
-## 🚀 Déploiement & Automatisation
-
-L'infrastructure utilise **Ansible** pour garantir la conformité des configurations.
-
-**Exemple de Playbook d'Audit (GRC) :**
-Ce script ne configure pas, il vérifie que les politiques de sécurité sont appliquées (ex: Firewall local actif).
-
-```yaml
-- name: Audit de Conformité
-  tasks:
-    - name: Check UFW Status
-      command: ufw status
-      register: ufw_status
-      failed_when: "'inactive' in ufw_status.stdout"
-````
+[**Voir la Matrice de Flux détaillée par Interface (WAN/LAN/DMZ) dans `docs/FIREWALL_RULES.md`**](./docs/FIREWALL_RULES.md)
 
 ---
 
-## 9. ⚙️ Roadmap & Perspectives
+## 8. Aperçu Visuel & Preuves de Concept
+
+Cette section illustre la mise en œuvre technique des politiques de sécurité et de gouvernance définies dans le DAT.
+
+### 📸 Captures d'Écran à Fournir
+1.  **Ségrégation Physique Virtuelle (Hyperviseur) :** Configuration Proxmox montrant l'isolation stricte des zones via des ponts Linux distincts.
+    * `docs/images/proxmox_network_segregation.png`
+2.  **Politique de Filtrage "Zero Trust" :** Règles pfSense sur l'interface DMZ. Illustration de la règle **BLOCK** DMZ $\rightarrow$ LAN.
+    * `docs/images/pfsense_dmz_rules.png`
+3.  **Source of Truth (NetBox) :** Inventaire dynamique servant de référence unique.
+    * `docs/images/netbox_inventory.png`
+4.  **Supervision Unifiée (Observabilité) :** Tableau de bord Grafana centralisant les alertes de disponibilité et l'analyse des flux.
+    * `docs/images/grafana_ops_dashboard.png`
+5.  **Automatisation & Audit (IaC) :** Exécution d'un playbook Ansible pour la vérification de conformité.
+    * `docs/images/ansible_audit_output.png`
+
+---
+
+## 9. ⚙️ Roadmap & Perspectives d'Évolution
 
 Ce plan d'action définit les évolutions futures pour maintenir le niveau de sécurité, de conformité et de performance de l'infrastructure.
 
@@ -179,27 +201,27 @@ Ce plan d'action définit les évolutions futures pour maintenir le niveau de s�
 | **I. Sécurité** | **Durcissement SSH (Hardening)** | Désactivation totale de l'auth par mot de passe sur pfSense une fois les clés Ed25519 déployées via Ansible (Mitigation Brute-force). |
 | **II. Audit** | **Audit de Conformité Automatisé** | Finalisation du playbook Ansible vérifiant périodiquement l'état des configurations par rapport au référentiel ("Configuration Drift"). |
 | **III. Visibilité** | **Intégration Single Pane of Glass** | Injection des données de flux **ntopng** dans les dashboards **Grafana** pour corréler métriques systèmes et comportement réseau. |
-| **IV. Data Quality** | **Fiabilisation CMDB (NetBox)** | Peupler 100% des objets (Sites, Devices, Câbles) pour que NetBox devienne l'unique "Source of Truth" opposable. |
+| **IV. Data Quality** | **Fiabilisation CMDB (NetBox)** | Peupler 100% des objets pour que NetBox devienne l'unique "Source of Truth" opposable. |
 | **V. Alerting** | **Alerting Critique** | Configuration des seuils d'alerte LibreNMS (ex: *VPN Down*, *Disk Usage > 80%*) avec notifications. |
 | **VI. Sauvegarde** | **GitOps Réseau (Oxidized)** | Automatisation complète du versioning des configurations routeurs vers un dépôt Git (Traçabilité des changements). |
-| **VII. SDN** | **Proxmox SDN (VXLAN)** | Migration des Linux Bridges vers une architecture **Software Defined Network**. Utilisation de VXLAN (Zone ID) pour une segmentation réseau indépendante de l'infrastructure physique. |
+| **VII. SDN** | **Proxmox SDN (VXLAN)** | Migration des Linux Bridges vers une architecture **Software Defined Network** (VXLAN) pour une segmentation indépendante de l'infrastructure physique. |
 | **VIII. Access Control** | **NAC 802.1X (RADIUS)** | Implémentation du contrôle d'accès réseau : aucun port ne s'active sans authentification du périphérique via certificats (Zero Trust au niveau Layer 2). |
 | **IX. Résilience** | **Haute Disponibilité (CARP)** | Configuration d'un cluster pfSense actif/passif avec synchronisation d'état (pfsync) pour garantir la continuité de service en cas de panne matérielle (Business Continuity Plan). |
 
 ---
 
-## ✅ Compétences Démontrées
+## 10. ✅ Compétences Démontrées
 
-Ce projet met en œuvre des compétences transversales en ingénierie système et sécurité :
+Ce projet met en œuvre des compétences transversales en ingénierie système et sécurité.
 
 ### 🛡️ Cybersécurité & Hardening
 * **Défense en Profondeur :** Conception d'une architecture cloisonnée (DMZ, LAN, Management) avec ségrégation stricte au niveau 2 (vNICs distinctes).
-* **Stratégie Zero Trust :** Application de politiques de pare-feu "Default Deny" et restriction des flux inter-VLAN au strict nécessaire.
-* **VPN & Cryptographie :** Déploiement de tunnels **WireGuard** site-à-site (Configuration des clés, routage statique, optimisation MTU).
+* **Stratégie Zero Trust :** Application de politiques de pare-feu "Default Deny" et restriction des flux inter-VLAN.
+* **VPN & Cryptographie :** Déploiement de tunnels **WireGuard** site-à-site (Configuration des clés, routage statique).
 * **Accès Distant Sécurisé :** Mise en place d'un tunnel **Cloudflare Zero Trust** pour l'administration sans exposition de surface d'attaque (No Open Ports).
 
 ### 📐 Architecture & Réseau (NetOps)
-* **Gouvernance des Données (GRC) :** Utilisation de **NetBox** comme *Source of Truth* (SoT) pour piloter l'inventaire et garantir la cohérence de la CMDB.
+* **Gouvernance des Données (GRC) :** Utilisation de **NetBox** comme *Source of Truth* (SoT) pour piloter l'inventaire.
 * **Supervision Hybride :** Implémentation d'une stratégie de monitoring centralisée (**LibreNMS/SNMPv3**) couplée à une analyse de flux déportée en "Edge" (**ntopng**).
 * **Virtualisation Avancée :** Maîtrise de l'hyperviseur **Proxmox VE** (Gestion des ponts Linux, conteneurs LXC non-privilégiés, nesting Docker).
 
