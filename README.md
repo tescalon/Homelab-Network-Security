@@ -1,4 +1,4 @@
-# 🛡️ Home Lab Réseau Avancé & Sécurité Opérationnelle
+# 🛡️ Home Lab Réseau & Sécurité
 
 [![Statut du Projet](https://img.shields.io/badge/Statut-Finalis%C3%A9-success)](./docs/ARCHITECTURE.md)
 [![Focus Technique](https://img.shields.io/badge/Focus-Réseaux%20%7C%20Sécurité&GRC%20%7C%20Zero%20Trust%20%7C%20IaC-blue)](./docs/ARCHITECTURE.md)
