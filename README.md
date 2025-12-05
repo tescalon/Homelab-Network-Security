@@ -22,19 +22,6 @@
 9.  [Roadmap & Perspectives d'Évolution](#9-roadmap--perspectives-dévolutions)
 10. [Compétences Démontrées](#10-compétences-démontrées)
 
-## 📑 Table des Matières (Navigation Rapide)
-
-1.  [1. 🏢 Piliers Architecturaux et Sécurité](#1-piliers-architecturaux-et-securite)
-2.  [2. 🔌 Isolation L2 : "Physical Virtual Segregation"](#2-isolation-l2-physical-virtual-segregation)
-3.  [3. 🏗️ Architecture & Inventaire IPAM](#3-architecture-et-inventaire-ipam)
-4.  [4. 🛡️ Ingénierie & Durcissement](#4-ingenierie-et-durcissement)
-5.  [5. 🛠️ Stack Technique Réseau & Sécurité & GRC](#5-stack-technique-reseau-securite-grc)
-6.  [6. 🔒 Interconnexion Sécurisée (WireGuard)](#6-interconnexion-securisee-wireguard)
-7.  [7. 🛡️ Politique de Sécurité (Zero Trust)](#7-politique-de-securite-zero-trust)
-8.  [8. 📸 Aperçu Visuel & Preuves de Concept](#8-apercu-visuel-et-preuves-de-concept)
-9.  [9. ⚙️ Roadmap & Perspectives d'Évolution](#9-roadmap-et-perspectives-devolution)
-10. [10. ✅ Compétences Démontrées](#10-competences-demontrees)
-
 ---
 
 ## 1. 🏢 Piliers Architecturaux et Sécurité
