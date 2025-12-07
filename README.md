@@ -196,7 +196,7 @@ Ceci est la **preuve fondamentale de sécurité**. Elle montre la règle de pare
 
 > **Justification :** Sans cette règle, un attaquant ayant compromis la Stack Docker pourrait se déplacer vers le réseau de gestion.
 
-![Règle BLOCK Critique (DMZ)](docs/images/host_hq/pfsense_zero_trust_block.png)
+![Règle BLOCK Critique (DMZ)](docs/images/Host_A/pfsense_zero_trust_block.png)
 
 #### 2. Validation du Routage Inter-Sites (WireGuard S2S)
 
@@ -204,7 +204,7 @@ Le `traceroute` prouve que la connectivité entre le Siège et l'Agence est fonc
 
 > **Justification :** Valide le tunnel VPN WireGuard et prouve la correction du routage statique complexe (Ingénierie Réseau).
 
-![Traceroute S2S](docs/images/host_hq/validation_traceroute_vpn.png)
+![Traceroute S2S](docs/images/Host_A/validation_traceroute_vpn.png)
 
 #### 3. Hardening et Optimisation Kernel
 
@@ -212,7 +212,7 @@ Preuve d'une correction essentielle en environnement virtualisé : la désactiva
 
 > **Justification :** Démontre l'expertise dans la gestion des problèmes de performance et d'intégrité de niveau kernel.
 
-![Optimisation Kernel](docs/images/host_hq/pfsense_kernel_optimisation.png)
+![Optimisation Kernel](docs/images/Host_A/pfsense_kernel_optimisation.png)
 
 #### 4. Audit, Supervision et Persistance (GRC)
 
@@ -220,7 +220,7 @@ Preuve que l'ensemble des outils SecOps (NetBox, LibreNMS, Oxidized) est déploy
 
 > **Justification :** Valide l'orchestration, l'auditabilité et la disponibilité des services critiques GRC.
 
-![Statut Docker Stack](docs/images/host_hq/docker_stack_status.png)
+![Statut Docker Stack](docs/images/Host_A/docker_stack_status.png)
 
 #### 5. Organisation IaC pour la Conformité
 
@@ -228,7 +228,7 @@ La structure du répertoire du serveur d'administration prouve l'organisation de
 
 > **Justification :** Démontre la rigueur dans l'application des principes d'Infrastructure as Code (IaC) et GitOps.
 
-![Organisation IaC](docs/images/architecture/homelab_file_structure.png)
+![Organisation IaC](docs/images/Host_A/homelab_file_structure.png)
 
 ---
 
