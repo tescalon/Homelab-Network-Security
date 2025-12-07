@@ -1,1 +1,20 @@
+username: oxidized
+password: password31 
+model: pfsense       
+interval: 3600        
+use_syslog: false
+rest: 10.50.10.10:8888      
+output:
+  default: file
+  file:
+    directory: /root/.config/oxidized/backups
+source:
+  default: csv
+  csv:
+    file: /root/.config/oxidized/router.db 
+    delimiter: !ruby/regexp /:/
+    map:
+      name: 0
+      model: 1
+      ip: 2
 
