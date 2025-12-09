@@ -9,7 +9,7 @@
 
 ---
 
-## 📑 Table des Matières (Navigation Rapide)
+## Table des Matières (Navigation Rapide)
 
 1.  [Piliers Architecturaux et Sécurité](#1--piliers-architecturaux-et-sécurité)
 2.  [Isolation L2 : "Physical Virtual Segregation"](#2-isolation-l2--physical-virtual-segregation)
@@ -24,7 +24,7 @@
 
 ---
 
-## 1. 🏢 Piliers Architecturaux et Sécurité
+## 1. Piliers Architecturaux et Sécurité
 
 Le projet dépasse la simple connectivité pour simuler un environnement critique où chaque flux est justifié. L'approche est celle du **"Security by Design"** : l'architecture privilégie une segmentation stricte et une auditabilité totale.
 
@@ -37,11 +37,11 @@ Le projet dépasse la simple connectivité pour simuler un environnement critiqu
 
 ---
 
-## 2.🔌 Isolation L2 : "Physical Virtual Segregation"
+## 2.Isolation L2 : "Physical Virtual Segregation"
 
 Cette architecture répond à une problématique spécifique liée à la sécurité des environnements virtualisés imbriqués (*Nested Virtualization*).
 
-> **⚠️ Le Risque Identifié (Threat Model)**
+> **Le Risque Identifié (Threat Model)**
 > Dans les environnements virtuels, la gestion des tags VLAN (**802.1Q**) peut être aléatoire (phénomène de *VLAN Stripping*), introduisant un risque majeur de **VLAN Hopping**. Un attaquant pourrait théoriquement "sauter" d'une zone compromise (DMZ) vers une zone sûre (LAN) sans passer par le filtrage du pare-feu.
 
 ### La Solution : "Air Gap Virtuel"
@@ -52,7 +52,7 @@ Au lieu de faire passer tous les réseaux sur un seul câble virtuel (Mode Trunk
 
 ---
 
-## 3.🏗️ Architecture & Inventaire IPAM
+## 3.Architecture & Inventaire IPAM
 
 Le cœur du réseau est hébergé sur le site principal. Il concentre les fonctions de sécurité périmétrique et de gouvernance.
 
@@ -75,10 +75,10 @@ flowchart TD
     end
 
     %% SITE PRINCIPAL (SIÈGE)
-    subgraph HQ [🏢 SITE SIÈGE - Infra Proxmox]
+    subgraph HQ [SITE SIÈGE - Infra Proxmox]
         
         %% Firewall HQ
-        pfHQ[("🔥 pfSense HQ
+        pfHQ[("pfSense HQ
         GW: 10.10.10.254")]:::firewall
         
         %% Interfaces Physiques/Virtuelles distinctes (Pas de Trunk)
@@ -88,7 +88,7 @@ flowchart TD
         subgraph Zone_DMZ [Zone DMZ - 10.50.10.0/24]
             pfHQ -- "em2 (DMZ)
             10.50.10.254" --> SwitchDMZ[vSwitch/Bridge DMZ]
-            SwitchDMZ -- "10.50.10.10" --> DockerHost[("🐳 Srv-Admin
+            SwitchDMZ -- "10.50.10.10" --> DockerHost[("Srv-Admin
             (Docker sur LXC)
             Netbox, LibreNMS, Ansible, Grafana, Oxidized")]:::dmz
         end
@@ -102,8 +102,8 @@ flowchart TD
     end
 
     %% SITE AGENCE
-    subgraph BR [🏠 SITE AGENCE]
-        pfBR[("🔥 pfSense Agence
+    subgraph BR [SITE AGENCE]
+        pfBR[("pfSense Agence
         GW: 10.20.10.254
         + ntopng (Edge)")]:::firewall
         
@@ -118,7 +118,7 @@ flowchart TD
 
     %% Relations Logiques
     %% Tunnel VPN
-    pfHQ <-->|🔒 WireGuard VPN em3 - Tunnel: 10.10.20.0/24| pfBR
+    pfHQ <-->|WireGuard VPN em3 - Tunnel: 10.10.20.0/24| pfBR
     
     %% Lien d'Hébergement (Physique/Virtuel)
     PVE -.->|Héberge le Conteneur LXC| DockerHost
@@ -136,7 +136,7 @@ L'adressage utilise la RFC1918 et une logique géographique stricte.
 
 ---
 
-## 4. 🛡️ Ingénierie & Durcissement
+## 4. Ingénierie & Durcissement
 
 Cette section détaille les choix techniques effectués pour renforcer la sécurité et la stabilité du système.
 
@@ -176,7 +176,7 @@ L'architecture utilise une imbrication de conteneurs (Nesting) pour optimiser le
 
 ---
 
-## 🛠️ 5. Stack Technique Réseau & Sécurité & GRC
+## 5. Stack Technique Réseau & Sécurité & GRC
 
 La chaîne d'outillage est centralisée dans la DMZ pour respecter la **Ségrégation des Tâches (SoD)**.
 
@@ -216,7 +216,7 @@ Nous adoptons une stratégie de traitement à la périphérie (**Edge Computing*
 | <img src="https://github.com/tescalon/Homelab-Network-Secops/blob/main/docs/images/logo/ntopng.png?raw=true" width="60"> | **ntopng** | **Analyse de Flux (Edge).** Détection d'anomalies et analyse comportementale du trafic à la périphérie (Agence). |
 ---
 
-## 6. 🔒 Interconnexion Sécurisée (WireGuard)
+## 6. Interconnexion Sécurisée (WireGuard)
 
 Choix technologique : **WireGuard** (vs IPsec/OpenVPN).
 
@@ -231,7 +231,7 @@ Choix technologique : **WireGuard** (vs IPsec/OpenVPN).
 
 ---
 
-## 7. 🛡️ Politique de Sécurité (Zero Trust)
+## 7. Politique de Sécurité (Zero Trust)
 
 **Stratégie appliquée :** Zero Trust (Default Deny). Le pare-feu est configuré pour bloquer par défaut tout trafic non explicitement autorisé.
 
@@ -248,7 +248,7 @@ Choix technologique : **WireGuard** (vs IPsec/OpenVPN).
 
 ---
 
-## 8. 📸 Aperçu Visuel & Preuves de Concept
+## 8. Aperçu Visuel & Preuves de Concept
 
 Afin de valider l'architecture et les politiques de sécurité clés, voici cinq preuves concrètes de la mise en œuvre de notre Lab.
 
@@ -298,7 +298,7 @@ La structure du répertoire du serveur d'administration prouve l'organisation de
 
 ---
 
-## 9. ⚙️ Roadmap & Perspectives d'Évolution
+## 9. Roadmap & Perspectives d'Évolution
 
 Ce plan d'action définit les évolutions futures pour maintenir le niveau de sécurité, de conformité et de performance de l'infrastructure.
 
@@ -318,7 +318,7 @@ Ce plan d'action définit les évolutions futures pour maintenir le niveau de s�
 > **L'implémentation des tâches de la Roadmap (Sécurité, Audit, Résilience) est planifiée pour les prochains jours ou semaines**
 ---
 
-## 10. ✅ Compétences Démontrées
+## 10. Compétences Démontrées
 
 Ce projet met en œuvre des compétences transversales en ingénierie système et sécurité.
 
