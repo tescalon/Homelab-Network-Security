@@ -1,0 +1,4 @@
+# Nom: Modèle: IP:
+pfSense-siege:pfsense:10.10.10.254
+pfsense-br:pfsense:10.20.10.254
+

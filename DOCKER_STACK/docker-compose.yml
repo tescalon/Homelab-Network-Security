@@ -1,0 +1,175 @@
+version: '3.8'
+
+# =============================================================================
+# Stack GRC & Supervision - Homelab Network SecOps
+# Déploiement : docker compose up -d
+# Arrêt       : docker compose down
+# =============================================================================
+
+networks:
+  # Réseau interne isolé entre les services (pas exposé à l'hôte)
+  homelab-net:
+    driver: bridge
+
+services:
+
+  # ===========================================================================
+  # NETBOX - Source of Truth (IPAM / CMDB)
+  # Accès : http://<IP_SERVEUR>:8000
+  # ===========================================================================
+  netbox:
+    image: netboxcommunity/netbox:latest
+    container_name: netbox
+    ports:
+      - "8000:8080"
+    environment:
+      - ALLOWED_HOSTS=*
+      - DB_HOST=postgres
+      - DB_NAME=netbox
+      - DB_USER=netbox
+      - DB_PASSWORD=password31
+      - REDIS_HOST=redis
+      - SECRET_KEY=password31_netbox_secret_key_change_me   # MÊME valeur que netbox-worker
+    depends_on:
+      - postgres
+      - redis
+    volumes:
+      - ./netbox-media:/opt/netbox/netbox/media
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  netbox-worker:
+    image: netboxcommunity/netbox:latest
+    container_name: netbox-worker
+    command: /opt/netbox/venv/bin/python /opt/netbox/netbox/manage.py rqworker
+    environment:
+      - ALLOWED_HOSTS=*
+      - DB_HOST=postgres
+      - DB_NAME=netbox
+      - DB_USER=netbox
+      - DB_PASSWORD=password31
+      - REDIS_HOST=redis
+      - SECRET_KEY=password31_netbox_secret_key_change_me   # DOIT être identique à netbox
+    depends_on:
+      - netbox
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: netbox-postgres
+    environment:
+      - POSTGRES_DB=netbox
+      - POSTGRES_USER=netbox
+      - POSTGRES_PASSWORD=password31
+    volumes:
+      - ./postgres-data:/var/lib/postgresql/data
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: netbox-redis
+    volumes:
+      - ./redis-data:/data
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # LIBRENMS - Supervision & Alerting (SNMPv2c/v3, seuils, notifications)
+  # Accès : http://<IP_SERVEUR>:80
+  # ===========================================================================
+  librenms:
+    image: librenms/librenms:latest
+    container_name: librenms
+    ports:
+      - "80:8000"
+    environment:
+      - DB_HOST=mariadb
+      - DB_NAME=librenms
+      - DB_USER=librenms
+      - DB_PASSWORD=password31
+      - TZ=Europe/Paris
+      - PUID=1000
+      - PGID=1000
+    depends_on:
+      - mariadb
+    volumes:
+      - ./librenms/rrd:/opt/librenms/rrd
+      - ./librenms/logs:/opt/librenms/logs
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  mariadb:
+    image: mariadb:10.11
+    container_name: librenms-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password31
+      - MYSQL_DATABASE=librenms
+      - MYSQL_USER=librenms
+      - MYSQL_PASSWORD=password31
+    volumes:
+      - ./mariadb-data:/var/lib/mysql
+    command:
+      - "mysqld"
+      - "--innodb-file-per-table=1"
+      - "--lower-case-table-names=0"
+      - "--character-set-server=utf8mb4"
+      - "--collation-server=utf8mb4_unicode_ci"
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # OXIDIZED - Versioning automatique des configurations réseau
+  # Accès : http://<IP_SERVEUR>:8888
+  # ===========================================================================
+  oxidized:
+    image: oxidized/oxidized:latest
+    container_name: oxidized
+    ports:
+      - "8888:8888"
+    environment:
+      - OXIDIZED_THREADS=2
+    volumes:
+      - ./oxidized-config:/root/.config/oxidized
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # CLOUDFLARE TUNNEL - Accès Zero Trust sans exposition de ports publics
+  # Remplace le besoin d'un VPN entrant pour l'administration distante
+  # ===========================================================================
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel --no-autoupdate run
+    environment:
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}   # Défini dans le fichier .env
+    networks:
+      - homelab-net
+    restart: unless-stopped
+
+  # ===========================================================================
+  # GRAFANA - Tableaux de bord & Observabilité (Single Pane of Glass)
+  # Accès : http://<IP_SERVEUR>:3000
+  # Décommenter quand la source de données LibreNMS est configurée
+  # ===========================================================================
+  # grafana:
+  #   image: grafana/grafana:latest
+  #   container_name: grafana
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./grafana-data:/var/lib/grafana
+  #   depends_on:
+  #     - librenms
+  #   networks:
+  #     - homelab-net
+  #   restart: unless-stopped

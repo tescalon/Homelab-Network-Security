@@ -1,0 +1,38 @@
+# =============================================================================
+# .gitignore - Homelab Network SecOps
+# =============================================================================
+
+# --- Secrets & Credentials ---
+.env                          # Variables d'environnement avec tokens/mots de passe
+*.key                         # Clés privées
+*.pem
+*.p12
+id_rsa
+id_ed25519
+!*.pub                        # Les clés PUBLIQUES peuvent être commitées
+
+# --- Ansible ---
+*.retry                       # Fichiers de retry générés après un échec
+.vault_pass                   # Mot de passe Ansible Vault
+
+# --- Docker / Données persistantes ---
+postgres-data/                # Base de données PostgreSQL (NetBox)
+mariadb-data/                 # Base de données MariaDB (LibreNMS)
+redis-data/                   # Cache Redis
+netbox-media/                 # Médias uploadés dans NetBox
+librenms/rrd/                 # Données RRD LibreNMS (graphes de métriques)
+librenms/logs/                # Logs LibreNMS
+grafana-data/                 # Données Grafana
+oxidized-config/git-repo/     # Repo git des configs routeurs (Oxidized)
+oxidized-config/backups/      # Backups locaux Oxidized (si output file)
+
+# --- OS & Éditeurs ---
+.DS_Store                     # macOS
+Thumbs.db                     # Windows
+*.swp                         # Vim
+*.swo
+.vscode/
+.idea/
+
+# --- Logs ---
+*.log

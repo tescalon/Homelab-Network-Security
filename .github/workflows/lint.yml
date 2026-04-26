@@ -1,0 +1,68 @@
+name: "CI - Lint & Validate"
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+
+  # ---------------------------------------------------------------------------
+  # Job 1 : Validation du docker-compose.yml
+  # ---------------------------------------------------------------------------
+  docker-compose-lint:
+    name: "Validate docker-compose.yml"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer Docker Compose
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y docker-compose
+
+      - name: Créer un .env factice pour la validation
+        run: echo "CLOUDFLARE_TUNNEL_TOKEN=dummy_token_for_ci" > DOCKER_STACK/.env
+
+      - name: Valider la syntaxe du docker-compose.yml
+        run: docker-compose -f DOCKER_STACK/docker-compose.yml config --quiet
+
+  # ---------------------------------------------------------------------------
+  # Job 2 : Lint des playbooks Ansible
+  # ---------------------------------------------------------------------------
+  ansible-lint:
+    name: "Ansible Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer Python & ansible-lint
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install ansible ansible-lint
+
+      - name: Linter les playbooks Ansible
+        run: |
+          ansible-lint ANSIBLE/playbooks/audit.yml
+          ansible-lint ANSIBLE/playbooks/deploy_ssh_keys.yml
+
+  # ---------------------------------------------------------------------------
+  # Job 3 : Validation YAML globale
+  # ---------------------------------------------------------------------------
+  yaml-lint:
+    name: "YAML Lint"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout du repo
+        uses: actions/checkout@v4
+
+      - name: Installer yamllint
+        run: pip install yamllint
+
+      - name: Linter tous les fichiers YAML
+        run: |
+          yamllint -d relaxed ANSIBLE/
+          yamllint -d relaxed DOCKER_STACK/docker-compose.yml

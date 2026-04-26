@@ -1,0 +1,36 @@
+# =============================================================================
+# Configuration Oxidized - Backup automatique des configurations réseau
+# Intervalle : 3600s (toutes les heures)
+# Output     : Git local (puis push vers GitHub via cron ou post-commit hook)
+# =============================================================================
+
+username: oxidized
+password: password31
+model: pfsense
+interval: 3600
+use_syslog: false
+
+# Interface REST d'Oxidized (pour déclencher des backups à la demande)
+rest: 10.50.10.10:8888
+
+# Sortie : Git local
+# Les configurations sont commitées automatiquement à chaque changement détecté.
+# Pour pousser vers GitHub, ajouter un cron :
+#   0 * * * * cd /root/.config/oxidized/git-repo && git push origin main
+output:
+  default: git
+  git:
+    user: Oxidized-Bot
+    email: oxidized@homelab.lan
+    repo: /root/.config/oxidized/git-repo
+
+# Source : fichier CSV (router.db)
+source:
+  default: csv
+  csv:
+    file: /root/.config/oxidized/router.db
+    delimiter: !ruby/regexp /:/
+    map:
+      name: 0
+      model: 1
+      ip: 2

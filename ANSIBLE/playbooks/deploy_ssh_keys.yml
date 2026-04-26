@@ -1,0 +1,40 @@
+---
+# =============================================================================
+# Playbook : Déploiement des clés SSH sur les pfSense
+# Cible    : groupe [pfsense_firewalls] (hosts.ini)
+# Prérequis: La clé Ed25519 doit exister sur le contrôleur (~/.ssh/id_ed25519.pub)
+#            Générer si absent : ssh-keygen -t ed25519 -C "ansible@homelab"
+# Usage    : ansible-playbook deploy_ssh_keys.yml
+# Post-op  : Désactiver l'auth par mot de passe sur pfSense (GUI > System > SSH)
+# =============================================================================
+
+- name: "1. Déployer la clé SSH sur les pfSense"
+  hosts: pfsense_firewalls
+  gather_facts: false
+  become: false
+
+  vars:
+    ssh_public_key_file: "~/.ssh/id_ed25519.pub"
+
+  tasks:
+
+    - name: "1.1 Vérifier l'existence locale de la clé publique"
+      ansible.builtin.stat:
+        path: "{{ ssh_public_key_file }}"
+      delegate_to: localhost
+      register: key_file_status
+      failed_when: not key_file_status.stat.exists
+
+    - name: "1.2 Déployer la clé Ed25519 dans authorized_keys"
+      ansible.posix.authorized_key:
+        user: "{{ ansible_user }}"
+        key: "{{ lookup('file', ssh_public_key_file) }}"
+        state: present
+        comment: "Déployé par Ansible - homelab"
+
+    - name: "1.3 Confirmation du déploiement"
+      ansible.builtin.debug:
+        msg: >
+          Clé SSH déployée sur {{ inventory_hostname }}.
+          Prochaine étape (manuelle) : désactiver l'auth par mot de passe
+          dans pfSense > System > Advanced > Secure Shell.

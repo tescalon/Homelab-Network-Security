@@ -1,0 +1,113 @@
+---
+# =============================================================================
+# Playbook : Audit de Sécurité & Conformité
+# Cible    : pfSense (FreeBSD) - groupe [pfsense_firewalls]
+# Usage    : ansible-playbook audit.yml
+# =============================================================================
+
+- name: "Audit de Securite - Firewalls pfSense"
+  hosts: pfsense_firewalls
+  gather_facts: false
+  tasks:
+
+    # -------------------------------------------------------------------------
+    # TEST 1 : Connectivite reseau
+    # -------------------------------------------------------------------------
+    - name: "TEST 1 : Ping de disponibilite"
+      ansible.builtin.ping:
+      register: ping_result
+      ignore_errors: true
+
+    - name: "RESULTAT 1 : [OK] Disponibilite confirmee"
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} est JOIGNABLE."
+      when: ping_result is success
+
+    - name: "RESULTAT 1 : [ALERTE] Hote injoignable"
+      ansible.builtin.debug:
+        msg: "ALERTE : {{ inventory_hostname }} ne repond pas au ping !"
+      when: ping_result is failed
+
+    # -------------------------------------------------------------------------
+    # TEST 2 : Version du systeme
+    # -------------------------------------------------------------------------
+    - name: "TEST 2 : Version OS"
+      ansible.builtin.command: uname -sr
+      register: os_version
+      changed_when: false
+
+    - name: "RESULTAT 2 : Version Systeme"
+      ansible.builtin.debug:
+        msg: "OS detecte sur {{ inventory_hostname }} : {{ os_version.stdout }}"
+
+    # -------------------------------------------------------------------------
+    # TEST 3 : Version pfSense
+    # -------------------------------------------------------------------------
+    - name: "TEST 3 : Version pfSense"
+      ansible.builtin.command: cat /etc/version
+      register: pfsense_version
+      changed_when: false
+      failed_when: false
+
+    - name: "RESULTAT 3 : Version pfSense"
+      ansible.builtin.debug:
+        msg: "pfSense version sur {{ inventory_hostname }} : {{ pfsense_version.stdout | default('Non disponible') }}"
+
+    # -------------------------------------------------------------------------
+    # TEST 4 : Securite SSH - Acces Root
+    # -------------------------------------------------------------------------
+    - name: "TEST 4 : Verifier interdiction Root SSH"
+      ansible.builtin.command: grep '^PermitRootLogin' /etc/ssh/sshd_config
+      register: ssh_root_check
+      failed_when: false
+      changed_when: false
+
+    - name: "RESULTAT 4 : [OK] Root SSH interdit"
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} : Root SSH correctement interdit ({{ ssh_root_check.stdout }})."
+      when: "'no' in ssh_root_check.stdout"
+
+    - name: "RESULTAT 4 : [ALERTE] Root SSH potentiellement autorise"
+      ansible.builtin.debug:
+        msg: "ALERTE : {{ inventory_hostname }} - PermitRootLogin : '{{ ssh_root_check.stdout }}'. Verifier manuellement."
+      when: "'no' not in ssh_root_check.stdout"
+
+    # -------------------------------------------------------------------------
+    # TEST 5 : Espace disque
+    # -------------------------------------------------------------------------
+    - name: "TEST 5 : Espace disque disponible"
+      ansible.builtin.command: df -h /
+      register: disk_usage
+      changed_when: false
+
+    - name: "RESULTAT 5 : Espace disque"
+      ansible.builtin.debug:
+        msg: "Disque sur {{ inventory_hostname }} : {{ disk_usage.stdout_lines[-1] }}"
+
+# =============================================================================
+# Audit du serveur d'administration (local)
+# =============================================================================
+- name: "Audit de Securite - Serveur Admin"
+  hosts: servers
+  gather_facts: false
+  tasks:
+
+    - name: "TEST 1 : Ping local"
+      ansible.builtin.ping:
+      register: ping_result
+
+    - name: "RESULTAT 1 : Disponibilite"
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} est joignable (local)."
+      when: ping_result is success
+
+    - name: "TEST 2 : Conteneurs Docker actifs"
+      ansible.builtin.command: docker ps --format "table {{ '{{' }}.Names{{ '}}' }}\t{{ '{{' }}.Status{{ '}}' }}\t{{ '{{' }}.Ports{{ '}}' }}"
+      register: docker_status
+      changed_when: false
+      ignore_errors: true
+
+    - name: "RESULTAT 2 : Etat des conteneurs"
+      ansible.builtin.debug:
+        msg: "{{ docker_status.stdout_lines }}"
+      when: docker_status is success
